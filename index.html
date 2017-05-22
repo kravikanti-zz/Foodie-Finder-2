@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FOODIE FINDER</title>
+    <h1> Foodie Finder </h1>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 90%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1 {
+          font-family: 'Verdana';
+          font-size: 25px;
+          text-align: center;
+      }
+    </style>
+    <script>
+      // This example requires the Places library. Include the libraries=places
+// parameter when you first load the API. For example:
+// <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+var map;
+var infoWindow;
+var service;
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: 38.0293, lng: -78.4767},
+    zoom: 15,
+    styles: [{
+      stylers: [{ visibility: 'simplified' }]
+    }]
+  });
+
+  infoWindow = new google.maps.InfoWindow();
+  service = new google.maps.places.PlacesService(map);
+
+  // The idle event is a debounced event, so we can query & listen without
+  // throwing too many requests at the server.
+  map.addListener('idle', performSearch);
+}
+
+function performSearch() {
+  var request = {
+    bounds: map.getBounds(),
+    keyword: 'restaurant'
+  };
+  service.radarSearch(request, callback);
+}
+
+function callback(results, status) {
+  if (status !== google.maps.places.PlacesServiceStatus.OK) {
+    console.error(status);
+    return;
+  }
+  for (var i = 0, result; result = results[i]; i++) {
+    addMarker(result);
+  }
+}
+
+function addMarker(place) {
+  var marker = new google.maps.Marker({
+    map: map,
+    position: place.geometry.location,
+  });
+
+  google.maps.event.addListener(marker, 'click', function() {
+    service.getDetails(place, function(result, status) {
+      if (status !== google.maps.places.PlacesServiceStatus.OK) {
+        console.error(status);
+        return;
+      }
+
+      if (!result.website){
+                var info = '<h1>' + result.name + '</h1>'
+              }
+              else{
+                info = '<h1>' + result.name + '</h1>' +  "Website: "  + result.website.link(result.website)
+              }
+              var detail_type = result.types
+              if(detail_type[0] != "point_of_interest") {
+                info += '<p>' + "Type: " + detail_type[0] + '</p>'
+              }
+
+              if(result.international_phone_number){
+                info += '<p>' + "Phone Number: " + result.international_phone_number + '</p>'
+              }
+
+              if(result.formatted_address){
+                info += '<p>' + "Address: " + result.formatted_address + '</p>'
+              }
+
+
+      infoWindow.setContent(info);
+      infoWindow.open(map, marker);
+    });
+  });
+}
+</script>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUGUy05pgyxRxbJOyoNn3uA9RctkMr18Y&libraries=places&callback=initMap" async defer></script>
+  </body>
+</html>
